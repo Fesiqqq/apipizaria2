@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bella Roza Pizzaria - Painel de Controle</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-pizza-slice logo-icon"></i>
+                <div class="brand-text">
+                    <h1>Bella Roza</h1>
+                    <span>Backoffice API</span>
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="tab-dashboard" id="btn-tab-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Painel Geral
+                </button>
+                <button class="menu-item" data-tab="tab-clientes" id="btn-tab-clientes">
+                    <i class="fa-solid fa-users"></i> Clientes & Endereços
+                </button>
+                <button class="menu-item" data-tab="tab-produtos" id="btn-tab-produtos">
+                    <i class="fa-solid fa-utensils"></i> Cardápio (Produtos)
+                </button>
+                <button class="menu-item" data-tab="tab-ingredientes" id="btn-tab-ingredientes">
+                    <i class="fa-solid fa-leaf"></i> Ingredientes
+                </button>
+                <button class="menu-item" data-tab="tab-carrinho" id="btn-tab-carrinho">
+                    <i class="fa-solid fa-cart-shopping"></i> Novo Pedido
+                </button>
+                <button class="menu-item" data-tab="tab-pedidos" id="btn-tab-pedidos">
+                    <i class="fa-solid fa-receipt"></i> Pedidos Realizados
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <p>Status da API: <span id="api-status-badge" class="badge badge-offline">Offline</span></p>
+                <button id="btn-ping-api" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrows-rotate"></i> Testar Conexão</button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-header">
+                <div class="top-header-title">
+                    <h2 id="current-tab-title">Painel Geral</h2>
+                </div>
+                <!-- Security Settings (API Key) -->
+                <div class="security-controls">
+                    <div class="api-key-picker">
+                        <label for="input-api-key"><i class="fa-solid fa-key"></i> X-API-Key:</label>
+                        <div class="input-group">
+                            <input type="text" id="input-api-key" value="api-pizzaria-secret-key-272" placeholder="Chave da API" title="Insira a chave X-API-Key para autenticação">
+                            <button id="btn-generate-key-modal" class="btn btn-primary" title="Gerar Nova API Key"><i class="fa-solid fa-plus"></i> Nova Chave</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Notification Toast Container -->
+            <div id="toast-container" class="toast-container"></div>
+
+            <!-- Content Area -->
+            <div class="content-body">
+                
+                <!-- TAB: DASHBOARD -->
+                <section id="tab-dashboard" class="tab-content active">
+                    <div class="dashboard-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="stat-info">
+                                <h3>Clientes</h3>
+                                <p class="stat-number" id="stat-clientes-count">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-pizza-slice"></i></div>
+                            <div class="stat-info">
+                                <h3>Produtos</h3>
+                                <p class="stat-number" id="stat-produtos-count">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-leaf"></i></div>
+                            <div class="stat-info">
+                                <h3>Ingredientes</h3>
+                                <p class="stat-number" id="stat-ingredientes-count">-</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fa-solid fa-receipt"></i></div>
+                            <div class="stat-info">
+                                <h3>Pedidos</h3>
+                                <p class="stat-number" id="stat-pedidos-count">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-details">
+                        <div class="card card-welcome">
+                            <h2>🍕 Bem-vindo ao Backoffice Bella Roza</h2>
+                            <p>Esta interface conecta-se diretamente com a API Spring Boot. Aqui você pode gerenciar todo o fluxo de retaguarda da pizzaria. No painel abaixo, você pode inspecionar os detalhes técnicos das requisições REST.</p>
+                            <div class="welcome-actions">
+                                <button class="btn btn-primary" onclick="switchTab('tab-carrinho')"><i class="fa-solid fa-cart-plus"></i> Novo Pedido Rápido</button>
+                                <button class="btn btn-outline" onclick="switchTab('tab-clientes')"><i class="fa-solid fa-user-plus"></i> Cadastrar Cliente</button>
+                            </div>
+                        </div>
+
+                        <div class="card card-features">
+                            <h3>Recursos de Segurança & Controle da API</h3>
+                            <ul class="features-list">
+                                <li>
+                                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                    <div class="feature-text">
+                                        <strong>Segurança por Chave de API:</strong> As requisições (exceto autenticação) exigem a chave do header <code>X-API-Key</code>. Você pode utilizar a chave mestre padrão ou criar uma chave exclusiva atrelada a um dono na aba "Gerar Nova Chave".
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon"><i class="fa-solid fa-infinity"></i></div>
+                                    <div class="feature-text">
+                                        <strong>Garantia de Idempotência:</strong> O cadastro de Clientes e Pedidos envia automaticamente um cabeçalho <code>X-Idempotency-Key</code>. Se a mesma requisição for disparada repetidamente (ex: cliques duplos), o backend processará apenas uma vez, evitando cadastros e cobranças duplicadas.
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                                    <div class="feature-text">
+                                        <strong>Rate Limiting (Controle de Tráfego):</strong> A API restringe requisições a no máximo <strong>20 chamadas por minuto</strong>. Tente atualizar as abas rapidamente para disparar o erro <code>429 Too Many Requests</code> e observe o painel de alerta.
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: CLIENTES & ENDEREÇOS -->
+                <section id="tab-clientes" class="tab-content">
+                    <div class="split-view">
+                        <!-- Left Panel: Clients CRUD -->
+                        <div class="panel-left card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-user"></i> Gestão de Clientes</h3>
+                                <button id="btn-new-client" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Novo Cliente</button>
+                            </div>
+                            <div class="search-bar">
+                                <input type="text" id="input-search-client" placeholder="Buscar por nome...">
+                                <button id="btn-search-client" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            </div>
+                            <div class="table-container">
+                                <table id="table-clientes">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nome</th>
+                                            <th>E-mail</th>
+                                            <th>Telefone</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-clientes">
+                                        <!-- Dynamic data -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Pagination -->
+                            <div class="pagination" id="pagination-clientes">
+                                <button class="btn btn-xs" id="btn-prev-clientes"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                                <span class="page-info" id="span-info-clientes">Página 1 de 1</span>
+                                <button class="btn btn-xs" id="btn-next-clientes">Próxima <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Addresses CRUD -->
+                        <div class="panel-right card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-location-dot"></i> Endereços do Cliente</h3>
+                                <button id="btn-new-address" class="btn btn-primary btn-sm" disabled><i class="fa-solid fa-plus"></i> Vincular Endereço</button>
+                            </div>
+                            <div class="selected-entity-indicator" id="selected-client-indicator">
+                                Selecione um cliente na lista ao lado para gerenciar seus endereços.
+                            </div>
+                            <div class="table-container">
+                                <table id="table-enderecos" class="hidden">
+                                    <thead>
+                                        <tr>
+                                            <th>Rua</th>
+                                            <th>Nº</th>
+                                            <th>Bairro</th>
+                                            <th>CEP</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-enderecos">
+                                        <!-- Dynamic data -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: CARDÁPIO (PRODUTOS) -->
+                <section id="tab-produtos" class="tab-content">
+                    <div class="card">
+                        <div class="panel-header">
+                            <div class="title-with-subtitle">
+                                <h3><i class="fa-solid fa-pizza-slice"></i> Cardápio de Produtos</h3>
+                                <div class="api-version-switch">
+                                    <span>Versão da API:</span>
+                                    <input type="radio" id="version-v1" name="api-version" value="1" checked>
+                                    <label for="version-v1">V1</label>
+                                    <input type="radio" id="version-v2" name="api-version" value="2">
+                                    <label for="version-v2">V2 (Exibe tag de API V2)</label>
+                                </div>
+                            </div>
+                            <button id="btn-new-product" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Novo Item</button>
+                        </div>
+                        
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label for="select-filter-tamanho">Filtrar por Tamanho:</label>
+                                <select id="select-filter-tamanho">
+                                    <option value="">TODOS</option>
+                                    <option value="PEQUENO">PEQUENO</option>
+                                    <option value="MEDIO">MEDIO</option>
+                                    <option value="GRANDE">GRANDE</option>
+                                    <option value="FAMILIA">FAMILIA</option>
+                                    <option value="UNICO">UNICO (Bebidas/Outros)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="table-produtos">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Tamanho</th>
+                                        <th>Preço Base</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-produtos">
+                                    <!-- Dynamic data -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="pagination" id="pagination-produtos">
+                            <button class="btn btn-xs" id="btn-prev-produtos"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                            <span class="page-info" id="span-info-produtos">Página 1 de 1</span>
+                            <button class="btn btn-xs" id="btn-next-produtos">Próxima <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: INGREDIENTES -->
+                <section id="tab-ingredientes" class="tab-content">
+                    <div class="card">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-leaf"></i> Estoque & Ingredientes</h3>
+                            <button id="btn-new-ingredient" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Novo Ingrediente</button>
+                        </div>
+                        
+                        <div class="search-bar">
+                            <input type="text" id="input-search-ingredient" placeholder="Buscar ingrediente por nome...">
+                            <button id="btn-search-ingredient" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="table-ingredientes">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-ingredientes">
+                                    <!-- Dynamic data -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="pagination" id="pagination-ingredientes">
+                            <button class="btn btn-xs" id="btn-prev-ingredientes"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                            <span class="page-info" id="span-info-ingredientes">Página 1 de 1</span>
+                            <button class="btn btn-xs" id="btn-next-ingredientes">Próxima <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: NOVO PEDIDO (CARRINHO) -->
+                <section id="tab-carrinho" class="tab-content">
+                    <div class="split-view">
+                        <!-- Cart Products Selector (Left) -->
+                        <div class="panel-left card">
+                            <h3>1. Escolha os Itens do Cardápio</h3>
+                            <div class="products-grid-list" id="cart-products-list">
+                                <!-- Dynamic products loaded as cards to easily add to cart -->
+                                <p class="loading-placeholder">Carregando cardápio...</p>
+                            </div>
+                        </div>
+
+                        <!-- Checkout Details (Right) -->
+                        <div class="panel-right card order-summary-panel">
+                            <h3>2. Detalhes do Pedido</h3>
+                            
+                            <div class="form-group">
+                                <label for="cart-select-cliente">Cliente do Pedido *</label>
+                                <select id="cart-select-cliente">
+                                    <option value="">-- Selecione o Cliente --</option>
+                                    <!-- Dynamic loading of clients -->
+                                </select>
+                            </div>
+
+                            <div class="cart-items-box">
+                                <h4>Itens Selecionados</h4>
+                                <ul class="cart-items-list" id="cart-items-container">
+                                    <li class="empty-cart-msg">Carrinho vazio. Adicione itens clicando em "+" ao lado.</li>
+                                </ul>
+                            </div>
+
+                            <div class="cart-total-box">
+                                <span>Total Estimado:</span>
+                                <span class="total-price" id="cart-total-value">R$ 0,00</span>
+                            </div>
+
+                            <div class="form-group idempotency-info">
+                                <label><i class="fa-solid fa-key"></i> X-Idempotency-Key automático:</label>
+                                <input type="text" id="cart-idempotency-key" readonly>
+                                <small>Esta chave garante que o pedido não seja duplicado.</small>
+                            </div>
+
+                            <button id="btn-submit-order" class="btn btn-success btn-block btn-lg"><i class="fa-solid fa-pizza-slice"></i> Finalizar & Enviar Pedido</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: PEDIDOS REALIZADOS -->
+                <section id="tab-pedidos" class="tab-content">
+                    <div class="card">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-receipt"></i> Histórico & Status dos Pedidos</h3>
+                        </div>
+
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label for="select-filter-pedido-status">Filtrar por Status:</label>
+                                <select id="select-filter-pedido-status">
+                                    <option value="">TODOS</option>
+                                    <option value="RECEBIDO">RECEBIDO</option>
+                                    <option value="PREPARANDO">PREPARANDO</option>
+                                    <option value="PRONTO">PRONTO</option>
+                                    <option value="ENTREGUE">ENTREGUE</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="table-pedidos">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Data/Hora</th>
+                                        <th>Cliente (ID)</th>
+                                        <th>Itens</th>
+                                        <th>Total Estimado</th>
+                                        <th>Status</th>
+                                        <th>Ações de Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-pedidos">
+                                    <!-- Dynamic data -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="pagination" id="pagination-pedidos">
+                            <button class="btn btn-xs" id="btn-prev-pedidos"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                            <span class="page-info" id="span-info-pedidos">Página 1 de 1</span>
+                            <button class="btn btn-xs" id="btn-next-pedidos">Próxima <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- API Inspector Console Log Footer -->
+            <footer class="api-inspector-footer">
+                <div class="inspector-header" id="inspector-toggle">
+                    <div class="inspector-title">
+                        <i class="fa-solid fa-terminal"></i> API Inspector (Console de Requisições REST)
+                    </div>
+                    <div class="inspector-actions">
+                        <button id="btn-clear-inspector" class="btn btn-xs btn-outline"><i class="fa-solid fa-trash-can"></i> Limpar</button>
+                        <i class="fa-solid fa-chevron-up toggle-arrow" id="inspector-arrow"></i>
+                    </div>
+                </div>
+                <div class="inspector-content" id="inspector-body">
+                    <div class="inspector-split">
+                        <div class="inspector-request-pane">
+                            <h4>Requisição HTTP Enviada</h4>
+                            <div class="code-box">
+                                <pre><code id="inspector-req-text">Nenhuma chamada realizada ainda.</code></pre>
+                            </div>
+                        </div>
+                        <div class="inspector-response-pane">
+                            <h4>Resposta HTTP Recebida</h4>
+                            <div class="code-box">
+                                <pre><code id="inspector-res-text">Aguardando interação com a API...</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- MODAL: CLIENT FORM -->
+    <div id="modal-client" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-client-title">Novo Cliente</h3>
+                <span class="close-btn" id="close-modal-client">&times;</span>
+            </div>
+            <form id="form-client">
+                <input type="hidden" id="input-client-id">
+                <div class="form-group">
+                    <label for="input-client-nome">Nome Completo *</label>
+                    <input type="text" id="input-client-nome" required placeholder="Ex: Maria Souza" pattern="^[a-zA-ZÀ-ÿ\s]+$" title="Apenas letras e espaços">
+                </div>
+                <div class="form-group">
+                    <label for="input-client-email">E-mail *</label>
+                    <input type="email" id="input-client-email" required placeholder="Ex: maria@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="input-client-telefone">Telefone (com DDD) *</label>
+                    <input type="tel" id="input-client-telefone" required placeholder="Ex: 11987654321" pattern="^\d{10,11}$" title="Apenas números, com DDD (10 ou 11 dígitos)">
+                </div>
+                <div class="form-group idempotency-info" id="client-idempotency-group">
+                    <label><i class="fa-solid fa-key"></i> X-Idempotency-Key automático:</label>
+                    <input type="text" id="client-idempotency-key" readonly>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-client">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-client">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADDRESS FORM -->
+    <div id="modal-address" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-address-title">Vincular Novo Endereço</h3>
+                <span class="close-btn" id="close-modal-address">&times;</span>
+            </div>
+            <form id="form-address">
+                <input type="hidden" id="input-address-id">
+                <input type="hidden" id="input-address-client-id">
+                
+                <div class="form-group">
+                    <label>Cliente Vinculado</label>
+                    <input type="text" id="input-address-client-name" readonly class="input-readonly">
+                </div>
+                <div class="form-group">
+                    <label for="input-address-cep">CEP (8 números sem traço) *</label>
+                    <input type="text" id="input-address-cep" required placeholder="Ex: 01310100" pattern="^\d{8}$" title="Exatamente 8 dígitos numéricos">
+                </div>
+                <div class="form-group">
+                    <label for="input-address-rua">Rua *</label>
+                    <input type="text" id="input-address-rua" required placeholder="Ex: Avenida Paulista" pattern="^[a-zA-ZÀ-ÿ0-9\s,._\-]+$" title="Apenas caracteres básicos">
+                </div>
+                <div class="form-group">
+                    <label for="input-address-numero">Número *</label>
+                    <input type="text" id="input-address-numero" required placeholder="Ex: 1000 ou Apto 12" pattern="^[0-9a-zA-Z\s/\-]+$" title="Apenas letras, números, barras e traços">
+                </div>
+                <div class="form-group">
+                    <label for="input-address-bairro">Bairro</label>
+                    <input type="text" id="input-address-bairro" placeholder="Ex: Bela Vista" pattern="^[a-zA-ZÀ-ÿ\s]+$" title="Apenas letras e espaços">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-address">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-address">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PRODUCT FORM -->
+    <div id="modal-product" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-product-title">Novo Item do Cardápio</h3>
+                <span class="close-btn" id="close-modal-product">&times;</span>
+            </div>
+            <form id="form-product">
+                <input type="hidden" id="input-product-id">
+                <div class="form-group">
+                    <label for="input-product-nome">Nome do Produto *</label>
+                    <input type="text" id="input-product-nome" required placeholder="Ex: Pizza de Calabresa">
+                </div>
+                <div class="form-group">
+                    <label for="input-product-descricao">Descrição</label>
+                    <textarea id="input-product-descricao" placeholder="Ex: Molho de tomate, mussarela, calabresa fatiada e cebola" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="select-product-tamanho">Tamanho *</label>
+                        <select id="select-product-tamanho" required>
+                            <option value="PEQUENO">PEQUENO</option>
+                            <option value="MEDIO">MEDIO</option>
+                            <option value="GRANDE">GRANDE</option>
+                            <option value="FAMILIA">FAMILIA</option>
+                            <option value="UNICO">UNICO (Bebida/Outros)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="input-product-preco">Preço Base (R$) *</label>
+                        <input type="number" id="input-product-preco" required step="0.01" min="0.01" placeholder="Ex: 45.90">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-product">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-product">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: INGREDIENT FORM -->
+    <div id="modal-ingredient" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-ingredient-title">Novo Ingrediente</h3>
+                <span class="close-btn" id="close-modal-ingredient">&times;</span>
+            </div>
+            <form id="form-ingredient">
+                <input type="hidden" id="input-ingredient-id">
+                <div class="form-group">
+                    <label for="input-ingredient-nome">Nome do Ingrediente *</label>
+                    <input type="text" id="input-ingredient-nome" required placeholder="Ex: Catupiry" pattern="^[a-zA-ZÀ-ÿ\s]+$" title="Apenas letras e espaços">
+                </div>
+                <div class="form-group">
+                    <label for="input-ingredient-descricao">Descrição</label>
+                    <input type="text" id="input-ingredient-descricao" placeholder="Ex: Catupiry original cremoso para bordas e coberturas">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-ingredient">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-ingredient">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: GENERATE API KEY -->
+    <div id="modal-api-key" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gerar Nova API Key</h3>
+                <span class="close-btn" id="close-modal-api-key">&times;</span>
+            </div>
+            <form id="form-api-key">
+                <p class="form-intro">Gere uma chave de acesso dinâmica vinculada a um dono/desenvolvedor para testar a segurança da API de forma isolada.</p>
+                <div class="form-group">
+                    <label for="input-api-key-dono">Nome do Dono da Chave *</label>
+                    <input type="text" id="input-api-key-dono" required placeholder="Ex: Fernando Desenvolvedor">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-api-key">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-api-key">Gerar Chave</button>
+                </div>
+            </form>
+            <hr class="modal-divider">
+            <div class="keys-history-section">
+                <h4>Histórico de Chaves Cadastradas</h4>
+                <div class="table-container-compact">
+                    <table class="compact-table">
+                        <thead>
+                            <tr>
+                                <th>Dono</th>
+                                <th>Chave</th>
+                                <th>Criada em</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-keys-list">
+                            <!-- Dynamic key history -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
