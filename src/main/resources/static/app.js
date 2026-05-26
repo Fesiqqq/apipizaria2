@@ -733,14 +733,10 @@ async function deleteEndereco(e, id) {
 async function loadProdutos() {
     const { page, size, currentSize } = state.pagination.produtos;
     const isV2 = document.getElementById('version-v2').checked;
-    const versionHeader = isV2 ? '2' : '1';
+    const versionPath = isV2 ? '2' : '1';
     
-    let endpoint = `/api/produtos?page=${page}&size=${size}`;
+    let endpoint = `/v${versionPath}/produtos?page=${page}&size=${size}`;
     if (currentSize) {
-        endpoint = `/api/produtos/tamanho?tamanho=${currentSize}&page=${page}&size=${size}`;
-    }
-    
-    try {
         const data = await apiCall(endpoint, 'GET', null, { 'X-API-Version': versionHeader });
         const tbody = document.getElementById('tbody-produtos');
         tbody.innerHTML = '';

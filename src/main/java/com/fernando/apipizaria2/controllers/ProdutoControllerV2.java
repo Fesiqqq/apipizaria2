@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/api/produtos", headers = "X-API-Version=2")
+@RequestMapping("/v2/produtos")
 @Tag(name = "Produtos (V2)", description = "Endpoints versionados de produtos exigindo X-API-Version=2")
 public class ProdutoControllerV2 {
 

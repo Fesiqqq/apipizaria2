@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Validated
 @RestController
-@RequestMapping(value = "/api/produtos", headers = "X-API-Version=1")
+@RequestMapping("/v1/produtos")
 @Tag(name = "Produtos", description = "Endpoints para gerenciamento do cardápio e produtos (Versão 1)")
 public class ProdutoController {
 
