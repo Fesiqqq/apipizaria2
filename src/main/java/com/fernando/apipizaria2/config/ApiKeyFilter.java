@@ -34,6 +34,13 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Ignora recursos estáticos do frontend (arquivos .html, .js, .css, .ico, etc.)
+        if (path.equals("/") || path.equals("/index.html") || path.equals("/app.js") || path.equals("/styles.css") || path.equals("/favicon.ico") ||
+            path.endsWith(".html") || path.endsWith(".js") || path.endsWith(".css") || path.endsWith(".ico") || path.endsWith(".png") || path.endsWith(".jpg") || path.endsWith(".svg")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String apiKey = request.getHeader(API_KEY_HEADER);
 
         boolean isValid = false;
