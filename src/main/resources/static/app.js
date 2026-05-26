@@ -167,6 +167,11 @@ async function apiCall(endpoint, method = 'GET', body = null, customHeaders = {}
         'X-API-Key': state.apiKey,
         ...customHeaders
     };
+
+    // Garante que todo POST tenha uma chave de idempotência
+    if (method.toUpperCase() === 'POST' && !headers['X-Idempotency-Key']) {
+        headers['X-Idempotency-Key'] = generateUUID();
+    }
     
     let fetchOptions = {
         method,

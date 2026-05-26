@@ -22,16 +22,30 @@ public class IdempotencyFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+        // Ignora recursos estáticos, h2-console, swagger, api-docs e rotas de erro
+        if (path.startsWith("/h2-console") || path.startsWith("/swagger-ui") || path.startsWith("/api-docs") || path.startsWith("/error") ||
+            path.equals("/") || path.equals("/index.html") || path.equals("/app.js") || path.equals("/styles.css") || path.equals("/favicon.ico") ||
+            path.endsWith(".html") || path.endsWith(".js") || path.endsWith(".css") || path.endsWith(".ico") || path.endsWith(".png") || path.endsWith(".jpg") || path.endsWith(".svg")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if ("POST".equalsIgnoreCase(request.getMethod())) {
             String idempotencyKey = request.getHeader("X-Idempotency-Key");
-            if (idempotencyKey != null) {
-                if (processedKeys.contains(idempotencyKey)) {
-                    response.setStatus(HttpStatus.CONFLICT.value());
-                    response.getWriter().write("Idempotency key already processed");
-                    return;
-                }
-                processedKeys.add(idempotencyKey);
+            if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
+                response.setStatus(HttpStatus.BAD_REQUEST.value());
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write("Chave de idempotência (X-Idempotency-Key) ausente.");
+                return;
             }
+            if (processedKeys.contains(idempotencyKey)) {
+                response.setStatus(HttpStatus.CONFLICT.value());
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write("Chave de idempotência já processada.");
+                return;
+            }
+            processedKeys.add(idempotencyKey);
         }
         filterChain.doFilter(request, response);
     }

@@ -96,4 +96,35 @@ public class OpenApiConfig {
             }
         };
     }
+
+    @Bean
+    public org.springdoc.core.customizers.OperationCustomizer addIdempotencyKeyHeader() {
+        return (operation, handlerMethod) -> {
+            boolean isPost = handlerMethod.getMethod().isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class);
+            if (!isPost) {
+                org.springframework.web.bind.annotation.RequestMapping requestMapping = 
+                    handlerMethod.getMethod().getAnnotation(org.springframework.web.bind.annotation.RequestMapping.class);
+                if (requestMapping != null) {
+                    for (org.springframework.web.bind.annotation.RequestMethod method : requestMapping.method()) {
+                        if (method == org.springframework.web.bind.annotation.RequestMethod.POST) {
+                            isPost = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (isPost) {
+                if (operation.getParameters() == null) {
+                    operation.setParameters(new java.util.ArrayList<>());
+                }
+                operation.addParametersItem(new io.swagger.v3.oas.models.parameters.Parameter()
+                        .in("header")
+                        .name("X-Idempotency-Key")
+                        .description("Chave de idempotência obrigatória para requisições POST")
+                        .required(true)
+                        .schema(new io.swagger.v3.oas.models.media.StringSchema().example("idemp-" + java.util.UUID.randomUUID().toString())));
+            }
+            return operation;
+        };
+    }
 }
