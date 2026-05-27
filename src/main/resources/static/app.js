@@ -1,5 +1,5 @@
 // Configurações Globais
-const API_BASE_URL = window.location.origin;
+const API_BASE_URL = 'https://apipizaria2.onrender.com';
 
 // Estado da Aplicação
 const state = {
@@ -482,7 +482,7 @@ async function loadDashboardStats() {
         
         // Requisições paralelas simuladas ou sucessivas
         const clientsRes = await apiCall('/v1/clientes?size=1');
-        const productsRes = await apiCall('/api/produtos?size=1', 'GET', null, {'X-API-Version': '1'});
+        const productsRes = await apiCall('/v1/produtos?size=1', 'GET');
         const ingredientsRes = await apiCall('/v1/ingredientes?size=1');
         const ordersRes = await apiCall('/v1/pedidos?size=1');
         
@@ -737,7 +737,7 @@ async function loadProdutos() {
     
     let endpoint = `/v${versionPath}/produtos?page=${page}&size=${size}`;
     if (currentSize) {
-        const data = await apiCall(endpoint, 'GET', null, { 'X-API-Version': versionHeader });
+        const data = await apiCall(endpoint, 'GET');
         const tbody = document.getElementById('tbody-produtos');
         tbody.innerHTML = '';
         
@@ -780,10 +780,11 @@ async function handleProductSubmit(e) {
     
     try {
         if (id) {
-            await apiCall(`/api/produtos/${id}`, 'PUT', payload, { 'X-API-Version': versionHeader });
+            if (id) {
+            await apiCall(`/v${versionHeader}/produtos/${id}`, 'PUT', payload);
             showToast('Produto Atualizado', `${nome} atualizado no cardápio.`);
         } else {
-            await apiCall('/api/produtos', 'POST', payload, { 'X-API-Version': versionHeader });
+            await apiCall(`/v${versionHeader}/produtos`, 'POST', payload);
             showToast('Produto Adicionado', `${nome} inserido com sucesso.`);
         }
         document.getElementById('modal-product').style.display = 'none';
@@ -810,7 +811,7 @@ async function deleteProduto(e, id) {
     
     const versionHeader = document.getElementById('version-v2').checked ? '2' : '1';
     try {
-        await apiCall(`/api/produtos/${id}`, 'DELETE', null, { 'X-API-Version': versionHeader });
+        await apiCall(`/v${versionHeader}/produtos/${id}`, 'DELETE');
         showToast('Produto Removido', 'Item excluído do cardápio.');
         loadProdutos();
     } catch(err) {}
@@ -927,7 +928,7 @@ async function loadCartInterface() {
 
     // 2. Carregar Produtos para o Grid (V1 padrão)
     try {
-        const prodRes = await apiCall('/api/produtos?size=100', 'GET', null, { 'X-API-Version': '1' });
+        const prodRes = await apiCall('/v1/produtos?size=100', 'GET');
         const grid = document.getElementById('cart-products-list');
         grid.innerHTML = '';
         
