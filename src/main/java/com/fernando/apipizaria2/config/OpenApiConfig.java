@@ -7,7 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
-
+import java.util.LinkedHashMap;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.headers.Header;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.media.IntegerSchema;
 @Configuration
 public class OpenApiConfig {
 
@@ -97,9 +101,47 @@ public class OpenApiConfig {
         };
     }
 
+
+    @Bean
+    public org.springdoc.core.customizers.OperationCustomizer addRateLimitResponse() {
+        return (operation, handlerMethod) -> {
+            // Check if this operation handles POST requests
+            boolean isPost = handlerMethod.getMethod().isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class);
+            if (!isPost) {
+                org.springframework.web.bind.annotation.RequestMapping requestMapping =
+                    handlerMethod.getMethod().getAnnotation(org.springframework.web.bind.annotation.RequestMapping.class);
+                if (requestMapping != null) {
+                    for (org.springframework.web.bind.annotation.RequestMethod method : requestMapping.method()) {
+                        if (method == org.springframework.web.bind.annotation.RequestMethod.POST) {
+                            isPost = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (isPost) {
+                // Ensure responses map exists
+                if (operation.getResponses() == null) {
+                    operation.setResponses(new io.swagger.v3.oas.models.responses.ApiResponses());
+                }
+                // Define 429 response
+                io.swagger.v3.oas.models.responses.ApiResponse response429 = new io.swagger.v3.oas.models.responses.ApiResponse()
+                    .description("Too Many Requests – rate limit exceeded");
+                // Add Retry-After header definition
+                response429.addHeaderObject("Retry-After",
+                    new io.swagger.v3.oas.models.headers.Header()
+                        .description("Seconds to wait before retrying the request")
+                        .schema(new io.swagger.v3.oas.models.media.IntegerSchema().example(30)));
+                operation.getResponses().put("429", response429);
+            }
+            return operation;
+        };
+    }
+
     @Bean
     public org.springdoc.core.customizers.OperationCustomizer addIdempotencyKeyHeader() {
         return (operation, handlerMethod) -> {
+            // Determine if the endpoint is a POST
             boolean isPost = handlerMethod.getMethod().isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class);
             if (!isPost) {
                 org.springframework.web.bind.annotation.RequestMapping requestMapping = 
