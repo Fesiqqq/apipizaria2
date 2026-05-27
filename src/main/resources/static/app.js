@@ -141,7 +141,8 @@ async function pingAPI() {
     const statusBadge = document.getElementById('api-status-badge');
     try {
         // Faz um fetch leve no endpoint público v1/auth/keys
-        const response = await fetch(`${API_BASE_URL}/v1/auth/keys`);
+        const versionPath = document.getElementById('version-v2').checked ? '/v2' : '/v1';
+        const response = await fetch(`${API_BASE_URL}${versionPath}/auth/keys`);
         if (response.ok || response.status === 401 || response.status === 403 || response.status === 404) {
             statusBadge.textContent = 'Online';
             statusBadge.className = 'badge badge-online';
@@ -481,10 +482,11 @@ async function loadDashboardStats() {
         state.apiKey = document.getElementById('input-api-key').value;
         
         // Requisições paralelas simuladas ou sucessivas
-        const clientsRes = await apiCall('/v1/clientes?size=1');
-        const productsRes = await apiCall('/v1/produtos?size=1', 'GET');
-        const ingredientsRes = await apiCall('/v1/ingredientes?size=1');
-        const ordersRes = await apiCall('/v1/pedidos?size=1');
+        const versionPrefix = document.getElementById('version-v2').checked ? '/v2' : '/v1';
+        const clientsRes = await apiCall(`${versionPrefix}/clientes?size=1`);
+        const productsRes = await apiCall(`${versionPrefix}/produtos?size=1`, 'GET');
+        const ingredientsRes = await apiCall(`${versionPrefix}/ingredientes?size=1`);
+        const ordersRes = await apiCall(`${versionPrefix}/pedidos?size=1`);
         
         document.getElementById('stat-clientes-count').textContent = clientsRes.totalElements ?? 0;
         document.getElementById('stat-produtos-count').textContent = productsRes.totalElements ?? 0;
@@ -504,10 +506,11 @@ async function loadDashboardStats() {
 
 async function loadClientes() {
     const { page, size, currentSearch } = state.pagination.clientes;
-    let endpoint = `/v1/clientes?page=${page}&size=${size}`;
+    const versionPrefix = document.getElementById('version-v2').checked ? '/v2' : '/v1';
+    let endpoint = `${versionPrefix}/clientes?page=${page}&size=${size}`;
     
     if (currentSearch) {
-        endpoint = `/v1/clientes/busca?nome=${encodeURIComponent(currentSearch)}&page=${page}&size=${size}`;
+        endpoint = `${versionPrefix}/clientes/busca?nome=${encodeURIComponent(currentSearch)}&page=${page}&size=${size}`;
     }
     
     try {
@@ -592,12 +595,12 @@ async function handleClientSubmit(e) {
     try {
         if (id) {
             // Edit
-            await apiCall(`/v1/clientes/${id}`, 'PUT', payload);
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/clientes/${id}`, 'PUT', payload);
             showToast('Cliente Atualizado', `Os dados de ${nome} foram salvos com sucesso.`);
         } else {
             // Create (Suporta Idempotency Key)
             const idempotencyKey = document.getElementById('client-idempotency-key').value;
-            await apiCall('/v1/clientes', 'POST', payload, {
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/clientes`, 'POST', payload, {
                 'X-Idempotency-Key': idempotencyKey
             });
             showToast('Cliente Cadastrado', `Cliente ${nome} criado com sucesso.`);
@@ -629,7 +632,7 @@ async function deleteCliente(e, id) {
     if (!confirm(`Deseja realmente remover o cliente com ID ${id}? Isso pode remover pedidos e endereços associados!`)) return;
     
     try {
-        await apiCall(`/v1/clientes/${id}`, 'DELETE');
+        await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/clientes/${id}`, 'DELETE');
         showToast('Cliente Removido', `Cliente ID ${id} excluído com sucesso.`);
         if (state.selectedClientId === id) {
             clearSelectedClient();
@@ -646,7 +649,7 @@ async function loadEnderecos(clientId) {
     try {
         // Busca todos endereços vinculados
         // A API traz paginado. Usaremos page=0 e size=50 para carregar todos no painel
-        const data = await apiCall(`/v1/enderecos?size=50`);
+        const data = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/enderecos?size=50`);
         const tbody = document.getElementById('tbody-enderecos');
         tbody.innerHTML = '';
         
@@ -689,10 +692,10 @@ async function handleAddressSubmit(e) {
     
     try {
         if (id) {
-            await apiCall(`/v1/enderecos/${id}`, 'PUT', payload);
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/enderecos/${id}`, 'PUT', payload);
             showToast('Endereço Atualizado', 'Modificações salvas com sucesso.');
         } else {
-            await apiCall('/v1/enderecos', 'POST', payload);
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/enderecos`, 'POST', payload);
             showToast('Endereço Adicionado', 'Endereço vinculado ao cliente com sucesso.');
         }
         
@@ -720,7 +723,7 @@ async function deleteEndereco(e, id) {
     if (!confirm(`Deseja realmente desvincular o endereço ID ${id}?`)) return;
     
     try {
-        await apiCall(`/v1/enderecos/${id}`, 'DELETE');
+        await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/enderecos/${id}`, 'DELETE');
         showToast('Endereço Removido', 'Endereço excluído com sucesso.');
         loadEnderecos(state.selectedClientId);
     } catch(err) {}
@@ -736,7 +739,7 @@ async function loadProdutos() {
     const versionPath = isV2 ? '2' : '1';
     
     let endpoint = `/v${versionPath}/produtos?page=${page}&size=${size}`;
-    if (currentSize) {
+    try {
         const data = await apiCall(endpoint, 'GET');
         const tbody = document.getElementById('tbody-produtos');
         tbody.innerHTML = '';
@@ -780,7 +783,6 @@ async function handleProductSubmit(e) {
     
     try {
         if (id) {
-            if (id) {
             await apiCall(`/v${versionHeader}/produtos/${id}`, 'PUT', payload);
             showToast('Produto Atualizado', `${nome} atualizado no cardápio.`);
         } else {
@@ -827,10 +829,11 @@ async function loadIngredienteOptionsForSelector() {
 
 async function loadIngredientes() {
     const { page, size, currentSearch } = state.pagination.ingredientes;
-    let endpoint = `/v1/ingredientes?page=${page}&size=${size}`;
+    const versionPrefix = document.getElementById('version-v2').checked ? '/v2' : '/v1';
+    let endpoint = `${versionPrefix}/ingredientes?page=${page}&size=${size}`;
     
     if (currentSearch) {
-        endpoint = `/v1/ingredientes/busca?nome=${encodeURIComponent(currentSearch)}&page=${page}&size=${size}`;
+        endpoint = `${versionPrefix}/ingredientes/busca?nome=${encodeURIComponent(currentSearch)}&page=${page}&size=${size}`;
     }
     
     try {
@@ -872,10 +875,10 @@ async function handleIngredientSubmit(e) {
     
     try {
         if (id) {
-            await apiCall(`/v1/ingredientes/${id}`, 'PUT', payload);
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/ingredientes/${id}`, 'PUT', payload);
             showToast('Ingrediente Atualizado', 'Alterações salvas.');
         } else {
-            await apiCall('/v1/ingredientes', 'POST', payload);
+            await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/ingredientes`, 'POST', payload);
             showToast('Ingrediente Cadastrado', `${nome} adicionado ao catálogo.`);
         }
         document.getElementById('modal-ingredient').style.display = 'none';
@@ -899,7 +902,7 @@ async function deleteIngrediente(e, id) {
     if (!confirm(`Remover ingrediente ID ${id}?`)) return;
     
     try {
-        await apiCall(`/v1/ingredientes/${id}`, 'DELETE');
+        await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/ingredientes/${id}`, 'DELETE');
         showToast('Ingrediente Excluído', 'Ingrediente removido com sucesso.');
         loadIngredientes();
     } catch(err) {}
@@ -912,7 +915,7 @@ async function deleteIngrediente(e, id) {
 async function loadCartInterface() {
     // 1. Carregar Clientes para o Dropdown
     try {
-        const clientsRes = await apiCall('/v1/clientes?size=100');
+        const clientsRes = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/clientes?size=100`);
         const select = document.getElementById('cart-select-cliente');
         select.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
         
@@ -928,7 +931,7 @@ async function loadCartInterface() {
 
     // 2. Carregar Produtos para o Grid (V1 padrão)
     try {
-        const prodRes = await apiCall('/v1/produtos?size=100', 'GET');
+        const prodRes = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/produtos?size=100`, 'GET');
         const grid = document.getElementById('cart-products-list');
         grid.innerHTML = '';
         
@@ -1047,7 +1050,7 @@ async function handleSubmitOrder() {
     const idempotencyKey = document.getElementById('cart-idempotency-key').value;
     
     try {
-        const orderCreated = await apiCall('/v1/pedidos', 'POST', payload, {
+        const orderCreated = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/pedidos`, 'POST', payload, {
             'X-Idempotency-Key': idempotencyKey
         });
         
@@ -1072,10 +1075,11 @@ async function handleSubmitOrder() {
 
 async function loadPedidos() {
     const { page, size, currentStatus } = state.pagination.pedidos;
-    let endpoint = `/v1/pedidos?page=${page}&size=${size}`;
+    const versionPrefix = document.getElementById('version-v2').checked ? '/v2' : '/v1';
+    let endpoint = `${versionPrefix}/pedidos?page=${page}&size=${size}`;
     
     if (currentStatus) {
-        endpoint = `/v1/pedidos/status?status=${currentStatus}&page=${page}&size=${size}`;
+        endpoint = `${versionPrefix}/pedidos/status?status=${currentStatus}&page=${page}&size=${size}`;
     }
     
     try {
@@ -1143,7 +1147,7 @@ async function loadPedidos() {
 
 async function updatePedidoStatus(id, newStatus) {
     try {
-        await apiCall(`/v1/pedidos/${id}/status?status=${newStatus}`, 'PUT');
+        await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/pedidos/${id}/status?status=${newStatus}`, 'PUT');
         showToast('Status Atualizado', `Pedido #${id} avançou para ${newStatus}.`);
         loadPedidos();
     } catch(err) {}
@@ -1153,7 +1157,7 @@ async function cancelarPedido(id) {
     if (!confirm(`Tem certeza que deseja cancelar e excluir o pedido #${id}?`)) return;
     
     try {
-        await apiCall(`/v1/pedidos/${id}`, 'DELETE');
+        await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/pedidos/${id}`, 'DELETE');
         showToast('Pedido Cancelado', `Pedido #${id} removido com sucesso.`);
         loadPedidos();
     } catch(err) {}
@@ -1165,7 +1169,7 @@ async function cancelarPedido(id) {
 
 async function loadKeysList() {
     try {
-        const keys = await apiCall('/v1/auth/keys');
+        const keys = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/auth/keys`);
         const tbody = document.getElementById('tbody-keys-list');
         tbody.innerHTML = '';
         
@@ -1198,7 +1202,7 @@ async function handleGenerateApiKey(e) {
     const dono = document.getElementById('input-api-key-dono').value;
     
     try {
-        const keyData = await apiCall(`/v1/auth/keys?dono=${encodeURIComponent(dono)}`, 'POST');
+        const keyData = await apiCall(`${document.getElementById('version-v2').checked ? '/v2' : '/v1'}/auth/keys?dono=${encodeURIComponent(dono)}`, 'POST');
         showToast('API Key Gerada', `Chave criada para o dono: ${dono}`);
         
         // Aplica a nova chave gerada automaticamente
